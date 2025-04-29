@@ -12,6 +12,14 @@ const BROADCAST_API = 'https://mvcapi.cyber3.space/tx/broadcast';
 const TX_DETAIL_API = 'https://mvcapi.cyber3.space/tx';
 const bip32 = BIP32Factory(ecc);
 
+// 日志工具类，自动带时间戳
+class Log {
+  static info(...args) {
+    const now = new Date().toISOString();
+    console.log(`[${now}]`, ...args);
+  }
+}
+
 export async function getKeyPairFromMnemonicAndPath(mnemonic, path) {
   const seed = await bip39.mnemonicToSeed(mnemonic);
   const root = bip32.fromSeed(seed);
@@ -26,7 +34,7 @@ export async function getUtxos(address) {
   // 访问api前随机休眠30~60秒，防风控
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const randomMs = 10000 + Math.floor(Math.random() * 10000); // 30~60秒
-  console.log(`[createAndSendTx] 休眠${randomMs / 1000}秒...`);
+  Log.info(`[getUtxos] 休眠${randomMs / 1000}秒...`);
   await sleep(randomMs);
   const url = `${API_BASE}/address/${address}/utxo`;
   const res = await axios.get(url);
@@ -81,7 +89,7 @@ export async function createAndSendTx({mnemonic, path, opType, protocolPath, pay
   // 广播前随机休眠30~60秒，防风控
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const randomMs = 10000 + Math.floor(Math.random() * 10000); // 30~60秒
-  console.log(`[createAndSendTx] 休眠${randomMs / 1000}秒...`);
+  Log.info(`[createAndSendTx] 休眠${randomMs / 1000}秒...`);
   await sleep(randomMs);
   
   const { key, address } = await getKeyPairFromMnemonicAndPath(mnemonic, path);
