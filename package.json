@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "axios": "^1.9.0",
+    "bip32": "^5.0.0-rc.0",
+    "bip39": "^3.1.0",
+    "cheerio": "^1.0.0",
+    "mvc-lib": "^1.0.5",
+    "puppeteer": "^24.7.2",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "tiny-secp256k1": "^2.2.3"
+  },
+  "type": "module"
+}
