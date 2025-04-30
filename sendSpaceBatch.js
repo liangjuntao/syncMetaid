@@ -79,6 +79,6 @@ export class MvcBatchTransfer {
 }
 
 // 用法示例：
-const mnemonic = '...';
+const mnemonic = '';
 const util = new MvcBatchTransfer(mnemonic);
 util.batchTransfer().then(console.log).catch(console.error); 

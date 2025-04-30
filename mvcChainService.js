@@ -1,24 +1,27 @@
+/**
+ * MVC链服务
+ * 提供底层的区块链交互功能，包括：
+ * 1. 通过助记词和路径生成密钥对
+ * 2. 获取地址的UTXO信息
+ * 3. 构建MetaID协议的脚本
+ * 4. 创建和发送交易到链上
+ * 
+ * 这是最底层的链上操作封装，被 ChainOperator 调用
+ */
+
 import MVC from 'mvc-lib';
 import bip39 from 'bip39';
 import { BIP32Factory } from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import axios from 'axios';
+import { errorLog, randomSleerp } from './util.js';
 
 const { Script, Address } = MVC;
 const API_BASE = 'https://mvcapi.cyber3.space';
 const FEE_PER_BYTE = 2;
 const FEE_PER_KB = FEE_PER_BYTE * 1024;
 const BROADCAST_API = 'https://mvcapi.cyber3.space/tx/broadcast';
-const TX_DETAIL_API = 'https://mvcapi.cyber3.space/tx';
 const bip32 = BIP32Factory(ecc);
-
-// 日志工具类，自动带时间戳
-class Log {
-  static info(...args) {
-    const now = new Date().toISOString();
-    console.log(`[${now}]`, ...args);
-  }
-}
 
 export async function getKeyPairFromMnemonicAndPath(mnemonic, path) {
   const seed = await bip39.mnemonicToSeed(mnemonic);
@@ -31,11 +34,6 @@ export async function getKeyPairFromMnemonicAndPath(mnemonic, path) {
 }
 
 export async function getUtxos(address) {
-  // 访问api前随机休眠30~60秒，防风控
-  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-  const randomMs = 10000 + Math.floor(Math.random() * 10000); // 30~60秒
-  Log.info(`[getUtxos] 休眠${randomMs / 1000}秒...`);
-  await sleep(randomMs);
   const url = `${API_BASE}/address/${address}/utxo`;
   const res = await axios.get(url);
   const utxos = res.data;
@@ -43,7 +41,7 @@ export async function getUtxos(address) {
     const addr = new Address(address);
     return Script.buildPublicKeyHashOut(addr).toHex();
   }
-  return Array.isArray(utxos) ? utxos
+  const filteredUtxos = Array.isArray(utxos) ? utxos
     .filter(u => Number(u.satoshis) > 546)
     .map(u => ({
       txId: u.txid,
@@ -52,6 +50,7 @@ export async function getUtxos(address) {
       script: u.scriptPubKey || addressToScriptHex(u.address),
       satoshis: Number(u.satoshis)
     })) : [];
+  return filteredUtxos;
 }
 
 export function buildMetaidScript(opType, protocolPath, payload) {
@@ -69,29 +68,7 @@ export function buildMetaidScript(opType, protocolPath, payload) {
   return script;
 }
 
-export async function getOpReturnVout(txid) {
-  // 查询链上交易详情，返回OP_RETURN的vout编号
-  const url = `${TX_DETAIL_API}/${txid}`;
-  const res = await axios.get(url);
-  const outputs = res.data?.vout || res.data?.outputs || [];
-  for (let i = 0; i < outputs.length; i++) {
-    const out = outputs[i];
-    // 兼容不同区块浏览器返回结构
-    const script = out.scriptPubKey?.asm || out.scriptPubKey || out.script || '';
-    if (script.includes('OP_RETURN')) {
-      return i;
-    }
-  }
-  throw new Error('未找到OP_RETURN输出');
-}
-
 export async function createAndSendTx({mnemonic, path, opType, protocolPath, payload}) {
-  // 广播前随机休眠30~60秒，防风控
-  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-  const randomMs = 10000 + Math.floor(Math.random() * 10000); // 30~60秒
-  Log.info(`[createAndSendTx] 休眠${randomMs / 1000}秒...`);
-  await sleep(randomMs);
-  
   const { key, address } = await getKeyPairFromMnemonicAndPath(mnemonic, path);
   const utxos = await getUtxos(address);
   if (!utxos || utxos.length === 0) {
@@ -121,6 +98,5 @@ export async function createAndSendTx({mnemonic, path, opType, protocolPath, pay
   tx.sign(key);
   const rawTx = tx.serialize();
   const res = await axios.post(BROADCAST_API, { hex: rawTx });
-
   return res.data;
 } 

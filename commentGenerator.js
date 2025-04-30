@@ -1,3 +1,9 @@
+/**
+ * 评论生成器
+ * 负责生成随机的评论内容
+ * 用于自动化互动时生成评论文本
+ */
+
 export class CommentGenerator {
   static generate() {
     const comments = [

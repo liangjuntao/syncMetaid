@@ -1,17 +1,15 @@
 export default {
   mnemonic: '...',
   derivationPaths: [
-    "m/44'/10001'/0'/0/1",
-    "m/44'/10001'/0'/0/2",
-    "m/44'/10001'/0'/0/3",
-    "m/44'/10001'/0'/0/4",
     "m/44'/10001'/0'/0/5",
-    "m/44'/10001'/0'/0/6",
-    "m/44'/10001'/0'/0/7",
-    "m/44'/10001'/0'/0/8",
-    "m/44'/10001'/0'/0/9"
-  ],
-  postInterval: 2 * 60 * 1000,      // 发帖间隔（5分钟）
-  interactInterval: 1 * 60 * 1000,  // 互动间隔（2分钟）
-  batchPostCount: 100                 // 每次批量处理的帖子数
+    "m/44'/10001'/0'/0/6"
+    ],
+  protocolId: '1EhQVrKgCzBGfRmMKRPmd2T9LjnFv4r9Kq', // 协议ID，这里作为节点的host地址
+  //1EhQVrKgCzBGfRmMKRPmd2T9LjnFv4r9Kq 另一个节点
+  //1FdityKmBAWVrmEm7mavajCGBwj5jHmVDR 
+  protocolPaths: {
+    post: ':/protocols/simplebuz',
+    comment: ':/protocols/paycomment',
+    like: ':/protocols/paylike'
+  }
 }; 
