@@ -5,11 +5,12 @@ import * as ecc from 'tiny-secp256k1';
 import axios from 'axios';
 
 const bip32 = BIP32Factory(ecc);
-const FEE_PER_BYTE = 2;
+const FEE_PER_BYTE = 10;
 const FEE_PER_KB = FEE_PER_BYTE * 1024;
 const API_BASE = 'https://mvcapi.cyber3.space';
 const BROADCAST_API = 'https://mvcapi.cyber3.space/tx/broadcast';
-const AMOUNT_PER_ADDR = 2000000; // 每个目标地址分配的聪数
+const AMOUNT_PER_ADDR = 1700000000; // 每个目标地址分配的聪数
+const ALL_ADDRESS_COUNT = 0;
 
 export class MvcBatchTransfer {
   constructor(mnemonic) {
@@ -27,6 +28,7 @@ export class MvcBatchTransfer {
   }
 
   async getUtxos(address) {
+    console.log(`[getUtxos] 获取地址: ${address} 的UTXO`);
     const url = `${API_BASE}/address/${address}/utxo`;
     const res = await axios.get(url);
     const utxos = res.data;
@@ -47,13 +49,14 @@ export class MvcBatchTransfer {
 
   async batchTransfer() {
     // 1. 恢复主地址
-    const mainPath = `m/44'/10001'/0'/0/0`;
+    const mainPath = `m/44'/236'/0'/0/0`;
     const { key, address } = await this.getKeyPair(mainPath);
+    console.log(`[batchTransfer] 主地址: ${address}`);
 
     // 2. 派生目标地址
     const targets = [];
-    for (let i = 1; i <= 9; i++) {
-      const path = `m/44'/10001'/0'/0/${i}`;
+    for (let i = 0; i <= ALL_ADDRESS_COUNT; i++) {
+      const path = `m/44'/236'/0'/0/${i}`;
       const { address: toAddr } = await this.getKeyPair(path);
       targets.push(toAddr);
     }
@@ -79,6 +82,6 @@ export class MvcBatchTransfer {
 }
 
 // 用法示例：
-const mnemonic = '';
+const mnemonic = ' '; 
 const util = new MvcBatchTransfer(mnemonic);
 util.batchTransfer().then(console.log).catch(console.error); 

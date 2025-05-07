@@ -15,6 +15,12 @@ import { BIP32Factory } from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import axios from 'axios';
 import { errorLog, randomSleerp } from './util.js';
+import {
+  MVC_RPC_HOST,
+  MVC_RPC_USER,
+  MVC_RPC_PASSWORD,
+  MVC_BROADCAST_TYPE
+} from './config.js';
 
 const { Script, Address } = MVC;
 const API_BASE = 'https://mvcapi.cyber3.space';
@@ -22,6 +28,9 @@ const FEE_PER_BYTE = 2;
 const FEE_PER_KB = FEE_PER_BYTE * 1024;
 const BROADCAST_API = 'https://mvcapi.cyber3.space/tx/broadcast';
 const bip32 = BIP32Factory(ecc);
+
+const BROADCAST_TYPE_API = 'api';
+const BROADCAST_TYPE_RPC = 'rpc';
 
 export async function getKeyPairFromMnemonicAndPath(mnemonic, path) {
   const seed = await bip39.mnemonicToSeed(mnemonic);
@@ -64,17 +73,55 @@ export function buildMetaidScript(opType, protocolPath, payload) {
   script.add(Buffer.from([0])); // 加密类型 0
   script.add(Buffer.from('1.0.0')); // 版本 1.0.0
   script.add(Buffer.from('text/plain;utf-8'));
-  script.add(Buffer.from(JSON.stringify(payload)));
+  if (typeof payload === 'string') {
+    script.add(Buffer.from(payload));
+  } else {
+    script.add(Buffer.from(JSON.stringify(payload)));
+  }
   return script;
 }
 
-export async function createAndSendTx({mnemonic, path, opType, protocolPath, payload}) {
+async function broadcastTx(rawTx, { broadcastType = BROADCAST_TYPE_API, rpcUrl, rpcUser, rpcPass } = {}) {
+  if (broadcastType === BROADCAST_TYPE_API) {
+    const res = await axios.post(BROADCAST_API, { hex: rawTx });
+    return res.data;
+  } else if (broadcastType === BROADCAST_TYPE_RPC) {
+    const res = await axios.post(
+      rpcUrl,
+      {
+        method: 'sendrawtransaction',
+        params: [rawTx],
+        id: 1,
+        jsonrpc: '2.0'
+      },
+      {
+        auth: {
+          username: rpcUser,
+          password: rpcPass
+        }
+      }
+    );
+    return res.data;
+  } else {
+    throw new Error('不支持的广播方式');
+  }
+}
+
+export async function createAndSendTx({
+  mnemonic, path, opType, protocolPath, payload,
+  broadcastType = MVC_BROADCAST_TYPE,
+  rpcUrl = MVC_RPC_HOST,
+  rpcUser = MVC_RPC_USER,
+  rpcPass = MVC_RPC_PASSWORD
+}) {
   const { key, address } = await getKeyPairFromMnemonicAndPath(mnemonic, path);
   const utxos = await getUtxos(address);
   if (!utxos || utxos.length === 0) {
     throw new Error('没有可用UTXO，请先充值');
   }
-  const utxo = utxos[0];
+  const index = Math.floor(Math.random() * utxos.length);
+  console.log(`[createAndSendTx] ${path} ，utxo总量: ${utxos.length}，随机选择UTXO索引: ${index}`);
+  const utxo = utxos[index];
   const tx = new MVC.Transaction()
     .from([{
       txId: utxo.txId,
@@ -86,7 +133,7 @@ export async function createAndSendTx({mnemonic, path, opType, protocolPath, pay
     // 先添加P2PKH 1聪输出（第0个输出）
     .addOutput(new MVC.Transaction.Output({
       script: MVC.Script.buildPublicKeyHashOut(address),
-      satoshis: 546
+      satoshis: 1
     }))
     // 再添加OP_RETURN输出（第1个输出）
     .addOutput(new MVC.Transaction.Output({
@@ -97,6 +144,17 @@ export async function createAndSendTx({mnemonic, path, opType, protocolPath, pay
     .feePerKb(FEE_PER_KB);
   tx.sign(key);
   const rawTx = tx.serialize();
-  const res = await axios.post(BROADCAST_API, { hex: rawTx });
-  return res.data;
+  const res = await broadcastTx(rawTx, { broadcastType, rpcUrl, rpcUser, rpcPass });
+  let txid;
+  if (broadcastType === BROADCAST_TYPE_API) {
+    txid = res.txid || res.result || res;
+    //console.log('[createAndSendTx] API广播返回:', res);
+  } else if (broadcastType === BROADCAST_TYPE_RPC) {
+    txid = res.result;
+    // console.log('[createAndSendTx] RPC广播返回:', res);
+  } else {
+    txid = res;
+    // console.log('[createAndSendTx] 广播返回:', res);
+  }
+  return txid;
 } 

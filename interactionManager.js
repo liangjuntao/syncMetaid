@@ -20,15 +20,21 @@ export class InteractionManager {
   async runBatchInteraction() {
     const posts = this.postProvider.getAllPosts();
     let hasInteraction = false;
-    for (const user of this.users) {
-      for (const post of posts) {
-        await randomSleerp(5000);
-        hasInteraction = true;
-        const comment = CommentGenerator.generate();
-        await ChainOperator.comment(user, post.id, comment);
-        await randomSleerp(5000);
-        await ChainOperator.like(user, post.id);
-        user.markInteracted(post.id);
+    for (const post of posts) {
+      for (const user of this.users) {
+        try {
+          await randomSleerp(1000);
+          hasInteraction = true;
+          // const comment = CommentGenerator.generate();//生成评论
+          const comment = "";
+          await ChainOperator.comment(user, post.id, comment);
+          await randomSleerp(1000);
+          await ChainOperator.like(user, post.id);
+          // user.markInteracted(post.id); 不用标记已经评论过
+        } catch (error) {
+          await randomSleerp(60000);
+          errorLog(`【互动任务】runBatchInteraction 互动失败:`, error);
+        }
       }
     }
     if (!hasInteraction) {
