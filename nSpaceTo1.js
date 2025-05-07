@@ -11,7 +11,7 @@ const FEE_PER_BYTE = 10;
 const FEE_PER_KB = FEE_PER_BYTE * 1024;
 
 // ====== 配置区 ======
-const mnemonic = 'beach fat mad output kitten broken kitchen over notice panda obscure monster'; //10 个号
+const mnemonic = ''; //10 个号
 // 需要汇总的路径（可自定义添加）
 const paths = [
   `m/44'/10001'/0'/0/1`,
