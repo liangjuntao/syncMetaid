@@ -4,7 +4,7 @@
  * 用于自动化互动时生成评论文本
  */
 
-export class CommentGenerator {
+class CommentGenerator {
   static commentCounts = new Map();
   static comments = [
     "干就完了！metaId节点已经开跑，早进早飞！",
@@ -128,4 +128,6 @@ export class CommentGenerator {
 
     return selectedComment;
   }
-} 
+}
+
+module.exports = { CommentGenerator }; 

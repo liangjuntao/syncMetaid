@@ -6,9 +6,9 @@
  * 3. 控制互动间隔，防止操作过于频繁
  */
 
-import { ChainOperator } from './chainOperator.js';
-import { CommentGenerator } from './commentGenerator.js';
-import { errorLog, randomSleerp } from './util.js';
+const { ChainOperator } = require('./chainOperator.js');
+const { CommentGenerator } = require('./commentGenerator.js');
+const { errorLog, randomSleerp } = require('./util.js');
 
 export class InteractionManager {
   constructor(users, postProvider, config) {
@@ -41,4 +41,6 @@ export class InteractionManager {
       errorLog(`【互动任务】没有可互动的内容`);
     }
   }
-} 
+}
+
+module.exports = {}; 

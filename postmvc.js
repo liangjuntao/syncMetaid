@@ -1,14 +1,15 @@
-import MVC from 'mvc-lib';
-import bip39 from 'bip39';
-import { BIP32Factory } from 'bip32';
-import * as ecc from 'tiny-secp256k1';
-import axios from 'axios';
-import * as cheerio from 'cheerio';
-import { fetchHotSearchList, fetchHotWeibos } from './weiboCrawler.js';
+const MVC = require('mvc-lib');
+const bip39 = require('bip39');
+const { BIP32Factory } = require('bip32');
+const ecc = require('tiny-secp256k1');
+const axios = require('axios');
+const cheerio = require('cheerio');
+const { fetchHotSearchList, fetchHotWeibos } = require('./weiboCrawler.js');
+const config = require('./config.js');
 const { Script, Address, crypto } = MVC;
 
 // ====== 1. 配置区 ======
-const MNEMONIC = 'choose family measure filter fly tool live donor dune depend pave you'; // TODO: 替换为你的助记词
+const MNEMONIC = config.mnemonic; // 从 config.js 读取助记词
 const NETWORK = 'mainnet'; // 主网
 const API_BASE = 'https://mvcapi.cyber3.space';
 const FEE_PER_BYTE = 2; // 推荐主网最低费率，单位：satoshi/byte
@@ -177,3 +178,5 @@ syncHotWeiboToMVC();
 // createAndSendTx(metaidPayload)
 //   .then(res => console.log('链上写入成功:', res))
 //   .catch(err => console.error('写入失败:', err));
+
+module.exports = {};

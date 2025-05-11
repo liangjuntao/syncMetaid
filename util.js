@@ -10,13 +10,15 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function errorLog(data) {
+function errorLog(data) {
     const now = new Date().toLocaleString();
     console.log(now + '：' + data);
 }
 
-export async function randomSleerp(sleepTime){
+async function randomSleerp(sleepTime){
     const randomMs = sleepTime + Math.floor(Math.random() * sleepTime); // 5~10秒
     errorLog(`[randomSleerp] 休眠${randomMs / 1000}秒...`);
     await sleep(randomMs);
 }
+
+module.exports = { errorLog, randomSleerp };

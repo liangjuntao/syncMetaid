@@ -1,7 +1,7 @@
-import config from './config.js';
-import { ChainOperator } from './chainOperator.js';
-import { errorLog, randomSleerp } from './util.js';
-import fs from 'fs';
+const config = require('./config.js');
+const { ChainOperator } = require('./chainOperator.js');
+const { errorLog, randomSleerp } = require('./util.js');
+const fs = require('fs');
 
 // 用户自定义的名字数组
 const names = [
@@ -65,4 +65,6 @@ async function batchCreateAvatars() {
 // batchCreateNames();
 
 // 执行批量头像上传
-batchCreateAvatars(); 
+batchCreateAvatars();
+
+module.exports = {}; 

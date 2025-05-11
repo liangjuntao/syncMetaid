@@ -9,18 +9,18 @@
  * 这是最底层的链上操作封装，被 ChainOperator 调用
  */
 
-import MVC from 'mvc-lib';
-import bip39 from 'bip39';
-import { BIP32Factory } from 'bip32';
-import * as ecc from 'tiny-secp256k1';
-import axios from 'axios';
-import { errorLog, randomSleerp } from './util.js';
-import {
+const MVC = require('mvc-lib');
+const bip39 = require('bip39');
+const { BIP32Factory } = require('bip32');
+const ecc = require('tiny-secp256k1');
+const axios = require('axios');
+const { errorLog, randomSleerp } = require('./util.js');
+const {
   MVC_RPC_HOST,
   MVC_RPC_USER,
   MVC_RPC_PASSWORD,
   MVC_BROADCAST_TYPE
-} from './config.js';
+} = require('./config.js');
 
 const { Script, Address } = MVC;
 const API_BASE = 'https://mvcapi.cyber3.space';
@@ -32,7 +32,7 @@ const bip32 = BIP32Factory(ecc);
 const BROADCAST_TYPE_API = 'api';
 const BROADCAST_TYPE_RPC = 'rpc';
 
-export async function getKeyPairFromMnemonicAndPath(mnemonic, path) {
+async function getKeyPairFromMnemonicAndPath(mnemonic, path) {
   const seed = await bip39.mnemonicToSeed(mnemonic);
   const root = bip32.fromSeed(seed);
   const child = root.derivePath(path);
@@ -42,7 +42,7 @@ export async function getKeyPairFromMnemonicAndPath(mnemonic, path) {
   return { key, address };
 }
 
-export async function getUtxos(address) {
+async function getUtxos(address) {
   const url = `${API_BASE}/address/${address}/utxo`;
   const res = await axios.get(url);
   const utxos = res.data;
@@ -62,7 +62,7 @@ export async function getUtxos(address) {
   return filteredUtxos;
 }
 
-export function buildMetaidScript(opType, protocolPath, payload) {
+function buildMetaidScript(opType, protocolPath, payload) {
   const script = new Script();
   const metaidBuf = Buffer.from('metaid');
   script.add('OP_FALSE');
@@ -107,7 +107,7 @@ async function broadcastTx(rawTx, { broadcastType = BROADCAST_TYPE_API, rpcUrl, 
   }
 }
 
-export async function createAndSendTx({
+async function createAndSendTx({
   mnemonic, path, opType, protocolPath, payload,
   broadcastType = MVC_BROADCAST_TYPE,
   rpcUrl = MVC_RPC_HOST,
@@ -157,4 +157,49 @@ export async function createAndSendTx({
     // console.log('[createAndSendTx] 广播返回:', res);
   }
   return txid;
-} 
+}
+
+// 新增：只构造不广播
+async function createMetaidTx({
+  mnemonic, path, opType, protocolPath, payload, utxo
+}) {
+  const { key, address } = await getKeyPairFromMnemonicAndPath(mnemonic, path);
+  let useUtxo = utxo;
+  if (!useUtxo) {
+    const utxos = await getUtxos(address);
+    if (!utxos || utxos.length === 0) {
+      throw new Error('没有可用UTXO，请先充值');
+    }
+    const index = Math.floor(Math.random() * utxos.length);
+    useUtxo = utxos[index];
+  }
+  const tx = new MVC.Transaction()
+    .from([{
+      txId: useUtxo.txId,
+      outputIndex: useUtxo.outputIndex,
+      address: address,
+      script: useUtxo.script,
+      satoshis: useUtxo.satoshis
+    }])
+    .addOutput(new MVC.Transaction.Output({
+      script: MVC.Script.buildPublicKeyHashOut(address),
+      satoshis: 1
+    }))
+    .addOutput(new MVC.Transaction.Output({
+      script: buildMetaidScript(opType, protocolPath, payload),
+      satoshis: 0
+    }))
+    .change(address)
+    .feePerKb(FEE_PER_KB);
+  tx.sign(key);
+  const rawTx = tx.serialize();
+  return { rawTx, tx };
+}
+
+module.exports = {
+  getKeyPairFromMnemonicAndPath,
+  getUtxos,
+  buildMetaidScript,
+  createAndSendTx,
+  createMetaidTx
+}; 

@@ -1,18 +1,19 @@
-import MVC from 'mvc-lib';
-import bip39 from 'bip39';
-import { BIP32Factory } from 'bip32';
-import * as ecc from 'tiny-secp256k1';
-import axios from 'axios';
+const MVC = require('mvc-lib');
+const bip39 = require('bip39');
+const { BIP32Factory } = require('bip32');
+const ecc = require('tiny-secp256k1');
+const axios = require('axios');
+const config = require('./config.js');
 
 const bip32 = BIP32Factory(ecc);
-const FEE_PER_BYTE = 10;
+const FEE_PER_BYTE = 3;
 const FEE_PER_KB = FEE_PER_BYTE * 1024;
 const API_BASE = 'https://mvcapi.cyber3.space';
 const BROADCAST_API = 'https://mvcapi.cyber3.space/tx/broadcast';
-const AMOUNT_PER_ADDR = 1700000000; // 每个目标地址分配的聪数
-const ALL_ADDRESS_COUNT = 0;
+const AMOUNT_PER_ADDR = 1000000; // 每个目标地址分配的聪数
+const ALL_ADDRESS_COUNT = 10;
 
-export class MvcBatchTransfer {
+class MvcBatchTransfer {
   constructor(mnemonic) {
     this.mnemonic = mnemonic;
   }
@@ -49,14 +50,14 @@ export class MvcBatchTransfer {
 
   async batchTransfer() {
     // 1. 恢复主地址
-    const mainPath = `m/44'/236'/0'/0/0`;
+    const mainPath = `m/44'/10001'/0'/0/0`;
     const { key, address } = await this.getKeyPair(mainPath);
     console.log(`[batchTransfer] 主地址: ${address}`);
 
     // 2. 派生目标地址
     const targets = [];
-    for (let i = 0; i <= ALL_ADDRESS_COUNT; i++) {
-      const path = `m/44'/236'/0'/0/${i}`;
+    for (let i = 1; i <= ALL_ADDRESS_COUNT; i++) {
+      const path = `m/44'/10001'/0'/0/${i}`;
       const { address: toAddr } = await this.getKeyPair(path);
       targets.push(toAddr);
     }
@@ -82,6 +83,7 @@ export class MvcBatchTransfer {
 }
 
 // 用法示例：
-const mnemonic = ' '; 
-const util = new MvcBatchTransfer(mnemonic);
-util.batchTransfer().then(console.log).catch(console.error); 
+const util = new MvcBatchTransfer(config.mnemonic);
+util.batchTransfer().then(console.log).catch(console.error);
+
+module.exports = { MvcBatchTransfer }; 

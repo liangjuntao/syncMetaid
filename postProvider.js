@@ -6,7 +6,7 @@
  * 3. 维护帖子池
  */
 
-export class PostProvider {
+class PostProvider {
   constructor() {
     this.posts = [];
   }
@@ -19,4 +19,6 @@ export class PostProvider {
   getAllPosts() {
     return this.posts;
   }
-} 
+}
+
+module.exports = { PostProvider }; 

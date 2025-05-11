@@ -7,12 +7,12 @@
  * 4. 控制整体流程
  */
 
-import { createUsers } from './user.js';
-import { PostProvider } from './postProvider.js';
-import { InteractionManager } from './interactionManager.js';
-import { ChainOperator } from './chainOperator.js';
-import config from './config.js';
-import { errorLog,randomSleerp} from './util.js';
+const { createUsers } = require('./user.js');
+const { PostProvider } = require('./postProvider.js');
+const { InteractionManager } = require('./interactionManager.js');
+const { ChainOperator } = require('./chainOperator.js');
+const config = require('./config.js');
+const { errorLog, randomSleerp } = require('./util.js');
 
 // 初始化用户和帖子池
 const users = createUsers(config.derivationPaths);
@@ -67,4 +67,6 @@ const batchCount = 1; // 例如发1批
   }
 })();
 
-errorLog(`自动互动机器人已启动...`); 
+errorLog(`自动互动机器人已启动...`);
+
+module.exports = {}; 

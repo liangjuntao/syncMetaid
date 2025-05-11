@@ -7,9 +7,9 @@
  * 4. 维护用户的派生路径信息
  */
 
-import config from './config.js';
+const config = require('./config.js');
 
-export class User {
+class User {
   /**
    * 创建用户实例
    * @param {string} id - 用户ID
@@ -39,8 +39,10 @@ export class User {
  * @param {string} [mnemonic] - 可选的助记词，如果不提供则使用config中的助记词
  * @returns {User[]} 用户实例数组
  */
-export function createUsers(paths, mnemonic = config.mnemonic) {
+function createUsers(paths, mnemonic = config.mnemonic) {
   return paths.map((path, idx) => 
     new User(`user${idx + 1}`, mnemonic, path)
   );
-} 
+}
+
+module.exports = { User, createUsers }; 

@@ -1,17 +1,18 @@
-import MVC from 'mvc-lib';
-import bip39 from 'bip39';
-import { BIP32Factory } from 'bip32';
-import * as ecc from 'tiny-secp256k1';
-import axios from 'axios';
-import { errorLog, randomSleerp } from './util.js';
-import {
+const MVC = require('mvc-lib');
+const bip39 = require('bip39');
+const { BIP32Factory } = require('bip32');
+const ecc = require('tiny-secp256k1');
+const axios = require('axios');
+const { errorLog, randomSleerp } = require('./util.js');
+const {
   MVC_STARTING_BLOCK_HEIGHT,
   MVC_RPC_HOST,
   MVC_RPC_USER,
   MVC_RPC_PASSWORD,
   MVC_ZMQPUBRAWTX,
   MVC_BROADCAST_TYPE
-} from './config.js';
+} = require('./config.js');
+const config = require('./config.js');
 
 const bip32 = BIP32Factory(ecc);
 const API_BASE = 'https://mvcapi.cyber3.space';
@@ -21,12 +22,12 @@ const FEE_PER_KB = FEE_PER_BYTE * 1024;
 const ALL_ADDRESS_COUNT = 10;
 
 // 单个UTXO拆分金额常量
-const UTXO_SPLIT_AMOUNT = 600;
+const UTXO_SPLIT_AMOUNT = 400;
 
 const BROADCAST_TYPE_API = 'api';
 const BROADCAST_TYPE_RPC = 'rpc';
 
-export class UtxoUtil {
+class UtxoUtil {
   constructor(mnemonic, options = {}) {
     this.mnemonic = mnemonic;
     this.broadcastType = options.broadcastType || BROADCAST_TYPE_API;
@@ -67,7 +68,7 @@ export class UtxoUtil {
       return MVC.Script.buildPublicKeyHashOut(addr).toHex();
     }
     const filtered = Array.isArray(utxos) ? utxos
-      .filter(u => Number(u.satoshis) > 555 && u.address === address)
+      .filter(u => Number(u.satoshis) > 600 && u.address === address)
       .map(u => ({
         txId: u.txid,
         outputIndex: u.outIndex,
@@ -105,16 +106,18 @@ export class UtxoUtil {
     }
   }
 
-  // 拆分：每个地址将所有余额大于555聪的utxo合并，尽量多拆成800聪的小utxo，剩余找零小于600聪则全部给矿工
   async splitAllAddressesUtxosToFiveBatch() {
     const addresses = await this.getAddresses();
-    // 拆分50个地址
     for (let i = 1; i <= ALL_ADDRESS_COUNT; i++) {
       const addr = addresses[i - 1];
       const { key } = await this.getKeyPair(`m/44'/10001'/0'/0/${i}`);
       const utxos = await this.getUtxos(addr);
       if (utxos.length === 0) {
         console.log(`[splitAllAddressesUtxosToFiveBatch] 地址${addr}无可用UTXO`);
+        continue;
+      }
+      if(utxos.length > 500){
+        console.log(`[splitAllAddressesUtxosToFiveBatch] 地址${addr}有${utxos.length}个UTXO，大于500个，跳过`);
         continue;
       }
       const total = utxos.reduce((sum, u) => sum + u.satoshis, 0);
@@ -172,14 +175,13 @@ export class UtxoUtil {
       } catch (e) {
         console.error(`[splitAllAddressesUtxosToFiveBatch] 广播失败:`, e.message);
       }
-      await randomSleerp(10000);
+      //await randomSleerp(10000);
     }
   }
 }
 
 // 用法示例：
-const mnemonic = ' '; 
-const util = new UtxoUtil(mnemonic, {
+const util = new UtxoUtil(config.mnemonic, {
   broadcastType: MVC_BROADCAST_TYPE,
   rpcUrl: MVC_RPC_HOST,
   rpcUser: MVC_RPC_USER,
@@ -187,4 +189,6 @@ const util = new UtxoUtil(mnemonic, {
 });
 // 或
 // const util = new UtxoUtil(mnemonic, { broadcastType: BROADCAST_TYPE_API });
-await util.splitAllAddressesUtxosToFiveBatch(); 
+await util.splitAllAddressesUtxosToFiveBatch();
+
+module.exports = { UtxoUtil }; 

@@ -1,17 +1,18 @@
-import MVC from 'mvc-lib';
-import bip39 from 'bip39';
-import { BIP32Factory } from 'bip32';
-import * as ecc from 'tiny-secp256k1';
-import axios from 'axios';
+const MVC = require('mvc-lib');
+const bip39 = require('bip39');
+const { BIP32Factory } = require('bip32');
+const ecc = require('tiny-secp256k1');
+const axios = require('axios');
+const config = require('./config.js');
 
 const bip32 = BIP32Factory(ecc);
 const API_BASE = 'https://mvcapi.cyber3.space';
 const BROADCAST_API = 'https://mvcapi.cyber3.space/tx/broadcast';
-const FEE_PER_BYTE = 10;
+const FEE_PER_BYTE = 3;
 const FEE_PER_KB = FEE_PER_BYTE * 1024;
 
 // ====== 配置区 ======
-const mnemonic = ''; //10 个号
+const mnemonic = config.mnemonic; // 从 config.js 读取助记词
 // 需要汇总的路径（可自定义添加）
 const paths = [
   `m/44'/10001'/0'/0/1`,
@@ -48,7 +49,7 @@ async function getUtxos(address) {
     return MVC.Script.buildPublicKeyHashOut(addr).toHex();
   }
   return Array.isArray(utxos) ? utxos
-    .filter(u => Number(u.satoshis) > 546)
+    .filter(u => Number(u.satoshis) > 200)
     .map(u => ({
       txId: u.txid,
       outputIndex: u.outIndex,
@@ -110,4 +111,6 @@ async function main() {
   }
 }
 
-main(); 
+main();
+
+module.exports = {}; 

@@ -1,11 +1,11 @@
-import axios from 'axios';
-import * as cheerio from 'cheerio';
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+const axios = require('axios');
+const cheerio = require('cheerio');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin());
 
 // 获取微博热搜榜单
-export async function fetchHotSearchList() {
+module.exports.fetchHotSearchList = async function fetchHotSearchList() {
   const browser = await puppeteer.launch({
     headless: false,
     userDataDir: 'C:\\_devData\\cursor\\syncMetaid\\mydata',
@@ -31,7 +31,7 @@ export async function fetchHotSearchList() {
 }
 
 // 用 puppeteer 获取某个热搜词下的热门微博
-export async function fetchHotWeibos(hotSearchUrl) {
+module.exports.fetchHotWeibos = async function fetchHotWeibos(hotSearchUrl) {
   const browser = await puppeteer.launch({
     headless: false,
     userDataDir: 'C:\\_devData\\cursor\\syncMetaid\\mydata',
