@@ -12,6 +12,10 @@ const FEE_PER_BYTE = 3;
 const FEE_PER_KB = FEE_PER_BYTE * 1024;
 const mainPath = `m/44'/236'/0'/0/0`;
 
+// 默认收款地址和金额（请根据实际情况修改）
+const DEFAULT_TO_ADDRESS = '1E8FoFSF62MjRMXHuXFpwqGVYGT2Hbt2GG';
+const DEFAULT_AMOUNT = 110000000; // 单位：聪
+
 async function getKeyPair(mnemonic, path) {
   const seed = await bip39.mnemonicToSeed(mnemonic);
   const root = bip32.fromSeed(seed);
@@ -85,7 +89,9 @@ async function sendToOne(toAddress, amount) {
 // 命令行用法: node 1send1.js 收款地址 金额(聪)
 if (require.main === module) {
   const [, , toAddress, amount] = process.argv;
-  sendToOne(toAddress, Number(amount));
+  const finalToAddress = toAddress || DEFAULT_TO_ADDRESS;
+  const finalAmount = amount ? Number(amount) : DEFAULT_AMOUNT;
+  sendToOne(finalToAddress, finalAmount);
 }
 
 module.exports = { sendToOne }; 
