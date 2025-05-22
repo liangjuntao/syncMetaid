@@ -10,7 +10,7 @@ const { ChainOperator } = require('./chainOperator.js');
 const { CommentGenerator } = require('./commentGenerator.js');
 const { errorLog, randomSleerp } = require('./util.js');
 
-export class InteractionManager {
+class InteractionManager {
   constructor(users, postProvider, config) {
     this.users = users;
     this.postProvider = postProvider;
@@ -43,4 +43,4 @@ export class InteractionManager {
   }
 }
 
-module.exports = {}; 
+module.exports = { InteractionManager }; 
